@@ -1,4 +1,3 @@
-// Uses public Reddit JSON API — no key needed, just set User-Agent
 export async function fetchRedditSignals() {
   const searches = [
     { sub: 'entrepreneur', query: 'hiring sales SDR outbound' },

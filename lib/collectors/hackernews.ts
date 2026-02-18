@@ -1,4 +1,3 @@
-// Uses HN Algolia API — completely free, no key needed
 export async function fetchHNSignals() {
   // Search for posts from the last 7 days (604800 seconds)
   const cutoff = Math.floor(Date.now() / 1000) - 604800

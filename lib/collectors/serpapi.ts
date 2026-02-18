@@ -1,4 +1,3 @@
-// Uses SerpAPI to search Google for job postings — 100 free searches/month
 export async function fetchJobSignals() {
   if (!process.env.SERPAPI_KEY) {
     console.log('[SerpAPI] No key found, skipping job signals')
