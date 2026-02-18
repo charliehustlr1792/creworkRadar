@@ -1,0 +1,42 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  website        String?
+  industry       String?
+  stage          String?  // "seed" | "series-a" | "series-b" | "growth" | "unknown"
+  sizeEstimate   String?  // "1-10" | "11-50" | "51-200" | "200+"
+  description    String?
+  intentScore    Int      @default(0)
+  scoreBreakdown Json?    // { funding: 40, hiring: 35, growth: 25 }
+  signalCount    Int      @default(1)
+  whyFlagged     String?
+  signals        Signal[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([intentScore(sort: Desc)])
+  @@index([industry])
+}
+
+model Signal {
+  id         String   @id @default(cuid())
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId  String
+  source     String   // "hackernews" | "reddit" | "serpapi"
+  signalType String   // "funding" | "hiring" | "growth" | "discussion"
+  rawText    String?
+  url        String?
+  detectedAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([signalType])
+}
