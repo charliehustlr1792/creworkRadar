@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const { signals } = await req.json()
   console.log('[DEBUG] Signals received:', signals.length)
 
-  const BATCH_SIZE = 4
+  const BATCH_SIZE = 2
   const extracted: Array<{ signal: (typeof signals)[0]; extracted: any }> = []
 
   for (let i = 0; i < signals.length; i += BATCH_SIZE) {
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       if (r.status === 'fulfilled' && r.value) extracted.push(r.value)
     }
 
-    if (i + BATCH_SIZE < signals.length) await new Promise(r => setTimeout(r, 1000))
+    if (i + BATCH_SIZE < signals.length) await new Promise(r => setTimeout(r, 3000))
   }
 
   console.log('[DEBUG] Total extracted:', extracted.length)
