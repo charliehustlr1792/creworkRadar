@@ -53,9 +53,9 @@ export function CompanyTable({ initialCompanies }: { initialCompanies: any[] }) 
         </select>
         <select value={sortBy} onChange={e => setSortBy(e.target.value)}
           className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300">
-          <option value="intentScore">Sort: Intent Score</option>
-          <option value="signalCount">Sort: Signal Count</option>
-          <option value="name">Sort: Name</option>
+          <option value="intentScore">Intent Score</option>
+          <option value="signalCount">Signal Count</option>
+          <option value="name">Name</option>
         </select>
         <span className="text-xs text-zinc-600 self-center ml-auto">{filtered.length} companies</span>
       </div>

@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const where = {
     intentScore: { gte: minScore },
     ...(industry ? { industry } : {}),
-    ...(search   ? { name: { contains: search } } : {}),
+   ...(search ? { name: { contains: search, mode: 'insensitive' as const } } : {}),
   }
 
   const [companies, total] = await Promise.all([
@@ -28,11 +28,5 @@ export async function GET(req: Request) {
     prisma.company.count({ where })
   ])
 
-  // Parse scoreBreakdown string back to object for the response
-  const parsed = companies.map(c => ({
-    ...c,
-    scoreBreakdown: c.scoreBreakdown ? JSON.parse(c.scoreBreakdown) : null
-  }))
-
-  return Response.json({ companies: parsed, total, page, pageSize: PAGE_SIZE })
+  return Response.json({ companies, total, page, pageSize: PAGE_SIZE })
 }

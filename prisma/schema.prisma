@@ -1,9 +1,9 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider  = "postgresql"
 }
 
 model Company {
@@ -15,7 +15,7 @@ model Company {
   sizeEstimate   String?
   description    String?
   intentScore    Int      @default(0)
-  scoreBreakdown String?
+  scoreBreakdown Json?
   signalCount    Int      @default(1)
   whyFlagged     String?
   signals        Signal[]

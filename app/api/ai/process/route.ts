@@ -57,7 +57,6 @@ export async function POST(req: Request) {
 
     await new Promise(r => setTimeout(r, 500))
 
-    const breakdownStr = JSON.stringify(breakdown)
 
     const existing = await prisma.company.findUnique({
       where: { name: info.company_name },
@@ -72,7 +71,7 @@ export async function POST(req: Request) {
           intentScore:    Math.min(existing.intentScore + 8, 100),
           signalCount:    existing.signalCount + companySigs.length,
           whyFlagged:     aiResult.why_flagged,
-          scoreBreakdown: breakdownStr,
+          scoreBreakdown: breakdown,
           description:    aiResult.why_flagged, // use why_flagged as description
         }
       })
@@ -99,7 +98,7 @@ export async function POST(req: Request) {
           stage:          info.stage,
           sizeEstimate:   aiResult.size_estimate,
           intentScore:    aiResult.adjusted_score,
-          scoreBreakdown: breakdownStr,
+          scoreBreakdown: breakdown,
           signalCount:    companySigs.length,
           whyFlagged:     aiResult.why_flagged,
           description:    aiResult.why_flagged,
