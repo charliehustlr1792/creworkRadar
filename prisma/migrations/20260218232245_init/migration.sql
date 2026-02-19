@@ -8,7 +8,7 @@ CREATE TABLE "Company" (
     "sizeEstimate" TEXT,
     "description" TEXT,
     "intentScore" INTEGER NOT NULL DEFAULT 0,
-    "scoreBreakdown" JSONB,
+    "scoreBreakdown" TEXT,
     "signalCount" INTEGER NOT NULL DEFAULT 1,
     "whyFlagged" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -31,7 +31,7 @@ CREATE TABLE "Signal" (
 CREATE UNIQUE INDEX "Company_name_key" ON "Company"("name");
 
 -- CreateIndex
-CREATE INDEX "Company_intentScore_idx" ON "Company"("intentScore" DESC);
+CREATE INDEX "Company_intentScore_idx" ON "Company"("intentScore");
 
 -- CreateIndex
 CREATE INDEX "Company_industry_idx" ON "Company"("industry");

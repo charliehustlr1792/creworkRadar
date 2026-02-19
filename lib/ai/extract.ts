@@ -39,10 +39,13 @@ Rules:
 
   try {
     const json = await callLLM(prompt)
+    console.log('[DEBUG] Raw LLM response:', json)
     const parsed = JSON.parse(json)
+    console.log('[DEBUG] Parsed:', parsed)
     if (!parsed.company_name || !parsed.is_relevant || parsed.confidence < 0.5) return null
     return parsed
-  } catch {
+  } catch (err) {
+    console.error('[DEBUG] Extract error:', err)
     return null
   }
 }

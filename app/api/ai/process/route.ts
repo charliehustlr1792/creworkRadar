@@ -9,9 +9,8 @@ export async function POST(req: Request) {
   }
 
   const { signals } = await req.json()
+  console.log('[DEBUG] Signals received:', signals.length)
 
-  // ── STEP 1: Extract companies from raw signal text ──────────────────────
-  // Process in batches of 4 to respect 15 RPM Gemini limit
   const BATCH_SIZE = 4
   const extracted: Array<{ signal: (typeof signals)[0]; extracted: any }> = []
 
@@ -32,8 +31,9 @@ export async function POST(req: Request) {
     if (i + BATCH_SIZE < signals.length) await new Promise(r => setTimeout(r, 1000))
   }
 
-  // ── STEP 2: Group by company name (deduplicate across sources) ──────────
-  const companyMap = new Map()
+  console.log('[DEBUG] Total extracted:', extracted.length)
+
+  const companyMap = new Map<string, { info: any; signals: any[] }>()
 
   for (const { signal, extracted: info } of extracted) {
     const key = info.company_name.toLowerCase().trim()
@@ -44,36 +44,54 @@ export async function POST(req: Request) {
     }
   }
 
-  // ── STEP 3: Score + Enrich + Upsert each company ───────────────────────
+  console.log('[DEBUG] Unique companies:', companyMap.size)
+
   let newCompanies = 0
   let updatedCompanies = 0
 
   for (const [, { info, signals: companySigs }] of companyMap) {
     const { score: baseScore, breakdown } = calculateBaseScore(companySigs)
     const aiResult = await enrichWithAIReasoning(info.company_name, companySigs, baseScore)
+
+    console.log('[DEBUG] Company:', info.company_name, '| score:', aiResult.adjusted_score)
+
     await new Promise(r => setTimeout(r, 500))
 
-    // ── Prisma upsert: insert if new, update score if existing ─────────────
-    // upsert() handles the "does it exist?" check in one atomic DB call
+    const breakdownStr = JSON.stringify(breakdown)
+
     const existing = await prisma.company.findUnique({
       where: { name: info.company_name },
       select: { id: true, signalCount: true, intentScore: true }
     })
 
     if (existing) {
+      // Update company
       await prisma.company.update({
         where: { id: existing.id },
         data: {
-          intentScore:    Math.min(existing.intentScore + 8, 100), // Multi-source boost
+          intentScore:    Math.min(existing.intentScore + 8, 100),
           signalCount:    existing.signalCount + companySigs.length,
           whyFlagged:     aiResult.why_flagged,
-          scoreBreakdown: breakdown,
-          // Prisma automatically sets updatedAt because of @updatedAt in schema
+          scoreBreakdown: breakdownStr,
+          description:    aiResult.why_flagged, // use why_flagged as description
         }
       })
+
+      // Write signals to DB
+      await prisma.signal.createMany({
+        data: companySigs.map((sig: any) => ({
+          companyId:  existing.id,
+          source:     sig.source,
+          signalType: sig.signal_type,
+          rawText:    sig.raw_text?.slice(0, 500),
+          url:        sig.url,
+        }))
+      })
+
       updatedCompanies++
     } else {
-      await prisma.company.create({
+      // Create company
+      const created = await prisma.company.create({
         data: {
           name:           info.company_name,
           website:        info.website,
@@ -81,14 +99,29 @@ export async function POST(req: Request) {
           stage:          info.stage,
           sizeEstimate:   aiResult.size_estimate,
           intentScore:    aiResult.adjusted_score,
-          scoreBreakdown: breakdown,
+          scoreBreakdown: breakdownStr,
           signalCount:    companySigs.length,
           whyFlagged:     aiResult.why_flagged,
+          description:    aiResult.why_flagged,
         }
       })
+
+      // Write signals to DB
+      await prisma.signal.createMany({
+        data: companySigs.map((sig: any) => ({
+          companyId:  created.id,
+          source:     sig.source,
+          signalType: sig.signal_type,
+          rawText:    sig.raw_text?.slice(0, 500),
+          url:        sig.url,
+        }))
+      })
+
       newCompanies++
     }
   }
+
+  console.log('[DEBUG] Done — new:', newCompanies, 'updated:', updatedCompanies)
 
   return Response.json({
     processed: companyMap.size,

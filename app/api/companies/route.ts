@@ -11,23 +11,28 @@ export async function GET(req: Request) {
   const page      = parseInt(searchParams.get('page') || '0')
   const PAGE_SIZE = 25
 
-  // Prisma's where clause — fully type-safe, TypeScript will catch typos
+  // Note: SQLite does not support mode: 'insensitive' — removed from contains
   const where = {
     intentScore: { gte: minScore },
-    ...(industry ? { industry }                                        : {}),
-    ...(search   ? { name: { contains: search, mode: 'insensitive' as const } } : {}),
+    ...(industry ? { industry } : {}),
+    ...(search   ? { name: { contains: search } } : {}),
   }
 
-  // Run count and data fetch in parallel
   const [companies, total] = await Promise.all([
     prisma.company.findMany({
       where,
       orderBy: { [sortField]: sortOrder },
-      skip:    page * PAGE_SIZE,
-      take:    PAGE_SIZE,
+      skip: page * PAGE_SIZE,
+      take: PAGE_SIZE,
     }),
     prisma.company.count({ where })
   ])
 
-  return Response.json({ companies, total, page, pageSize: PAGE_SIZE })
+  // Parse scoreBreakdown string back to object for the response
+  const parsed = companies.map(c => ({
+    ...c,
+    scoreBreakdown: c.scoreBreakdown ? JSON.parse(c.scoreBreakdown) : null
+  }))
+
+  return Response.json({ companies: parsed, total, page, pageSize: PAGE_SIZE })
 }
