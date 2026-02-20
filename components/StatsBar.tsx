@@ -1,3 +1,6 @@
+'use client'
+import { useEffect, useState } from 'react'
+
 interface StatsBarProps {
   total: number
   highIntent: number
@@ -7,42 +10,49 @@ interface StatsBarProps {
 export function StatsBar({ total, highIntent, lastRefreshed }: StatsBarProps) {
   const conversionRate = total > 0 ? Math.round((highIntent / total) * 100) : 0
 
+  // Format time client-side so it uses the user's local timezone, not Vercel's UTC
+  const [timeStr, setTimeStr] = useState('—')
+  const [dateStr, setDateStr] = useState('never')
+
+  useEffect(() => {
+    if (!lastRefreshed) return
+    const d = new Date(lastRefreshed)
+    setTimeStr(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+    setDateStr(d.toLocaleDateString([], { month: 'short', day: 'numeric' }))
+  }, [lastRefreshed])
+
   const stats = [
     {
-      label: 'TOTAL LEADS',
-      value: total,
-      sub: 'companies tracked',
-      color: 'text-white',
+      label:     'TOTAL LEADS',
+      value:     total,
+      sub:       'companies tracked',
+      color:     'text-white',
       sub_color: 'text-zinc-600',
-      glow: false,
+      glow:      false,
     },
     {
-      label: 'HIGH INTENT',
-      value: highIntent,
-      sub: 'score ≥ 70',
-      color: 'text-emerald-400',
+      label:     'HIGH INTENT',
+      value:     highIntent,
+      sub:       'score ≥ 70',
+      color:     'text-emerald-400',
       sub_color: 'text-emerald-800',
-      glow: true,
+      glow:      true,
     },
     {
-      label: 'CONVERSION',
-      value: `${conversionRate}%`,
-      sub: 'high intent ratio',
-      color: 'text-emerald-300',
+      label:     'CONVERSION',
+      value:     `${conversionRate}%`,
+      sub:       'high intent ratio',
+      color:     'text-emerald-300',
       sub_color: 'text-emerald-900',
-      glow: false,
+      glow:      false,
     },
     {
-      label: 'LAST REFRESH',
-      value: lastRefreshed
-        ? new Date(lastRefreshed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : '—',
-      sub: lastRefreshed
-        ? new Date(lastRefreshed).toLocaleDateString([], { month: 'short', day: 'numeric' })
-        : 'never refreshed',
-      color: 'text-zinc-300',
+      label:     'LAST REFRESH',
+      value:     timeStr,
+      sub:       dateStr,
+      color:     'text-zinc-300',
       sub_color: 'text-zinc-600',
-      glow: false,
+      glow:      false,
     },
   ]
 
