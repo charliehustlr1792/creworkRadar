@@ -1,9 +1,9 @@
 generator client {
-  provider   = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model Company {
@@ -18,9 +18,9 @@ model Company {
   scoreBreakdown Json?
   signalCount    Int      @default(1)
   whyFlagged     String?
-  signals        Signal[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  signals        Signal[]
 
   @@index([intentScore])
   @@index([industry])
@@ -28,13 +28,13 @@ model Company {
 
 model Signal {
   id         String   @id @default(cuid())
-  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId  String
   source     String
   signalType String
   rawText    String?
   url        String?
   detectedAt DateTime @default(now())
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([signalType])
